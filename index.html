@@ -1,1 +1,585 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Realistisches Ligretto</title>
+    <style>
+        :root {
+            --red: #c0392b;
+            --blue: #2980b9;
+            --green: #27ae60;
+            --yellow: #f39c12;
+            --card-w: 80px;
+            --card-h: 115px;
+        }
 
+        body {
+            margin: 0; padding: 0;
+            background: #1e5128 url('https://www.transparenttextures.com/patterns/felt.png'); /* Realistischer Filz-Look */
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            touch-action: none; /* Verhindert Scrollen auf Mobile beim Draggen */
+            user-select: none;
+        }
+
+        #table {
+            width: 100vw; height: 100vh;
+            position: relative;
+        }
+
+        /* UI Overlays */
+        #menu {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 10000; color: white;
+        }
+        #menu button {
+            padding: 15px 40px; font-size: 1.5rem; cursor: pointer;
+            border: none; border-radius: 8px; background: #f39c12; color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); font-weight: bold;
+        }
+
+        /* Bot Areas */
+        .bot-area {
+            position: absolute;
+            background: rgba(0,0,0,0.3); padding: 10px 20px;
+            border-radius: 10px; color: white; font-weight: bold;
+            pointer-events: none;
+        }
+        #bot1 { top: 20px; left: 20px; }
+        #bot2 { top: 20px; left: 50%; transform: translateX(-50%); }
+        #bot3 { top: 20px; right: 20px; }
+
+        /* Player Area */
+        #player-area {
+            position: absolute; bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            display: flex; gap: 40px;
+            background: rgba(0,0,0,0.4); padding: 20px;
+            border-radius: 15px; border: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .zone {
+            display: flex; gap: 15px; position: relative;
+        }
+
+        .slot {
+            width: var(--card-w); height: var(--card-h);
+            border: 2px dashed rgba(255,255,255,0.4);
+            border-radius: 8px;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .slot-label {
+            position: absolute; bottom: -25px; width: 100%;
+            text-align: center; color: rgba(255,255,255,0.7); font-size: 0.8rem;
+        }
+
+        /* Cards */
+        .card {
+            width: var(--card-w); height: var(--card-h);
+            background: white; border-radius: 8px;
+            position: absolute;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 3rem; font-weight: bold;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+            box-sizing: border-box; border: 4px solid white;
+            cursor: grab;
+            transition: transform 0.1s;
+        }
+        .card:active { cursor: grabbing; }
+        .card.back {
+            background: repeating-linear-gradient(45deg, #2c3e50, #2c3e50 10px, #34495e 10px, #34495e 20px);
+            border-color: white; color: transparent; cursor: pointer;
+        }
+        
+        .card.red { color: var(--red); border-color: var(--red); }
+        .card.blue { color: var(--blue); border-color: var(--blue); }
+        .card.green { color: var(--green); border-color: var(--green); }
+        .card.yellow { color: var(--yellow); border-color: var(--yellow); }
+
+        .card.center-card {
+            pointer-events: none; /* Karten in der Mitte können nicht mehr bewegt werden */
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .card.bot-card {
+            transition: all 0.4s ease-out; /* Animation für fliegende Bot-Karten */
+            z-index: 9000;
+        }
+
+        .card.shuffling {
+            animation: shuffleAnim 0.5s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes shuffleAnim {
+            0% { transform: translateX(0) rotate(0); }
+            25% { transform: translateX(-10px) rotate(-5deg); }
+            50% { transform: translateX(10px) rotate(5deg); }
+            75% { transform: translateX(-5px) rotate(-2deg); }
+            100% { transform: translateX(0) rotate(0); }
+        }
+
+        .count-badge {
+            position: absolute; top: -15px; right: -15px;
+            background: #e74c3c; color: white; border-radius: 50%;
+            width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        /* Center Drop Area restriction */
+        #center-area {
+            position: absolute;
+            top: 80px; left: 50px; right: 50px; bottom: 250px;
+            /* background: rgba(255,0,0,0.1); /* Debug */
+            pointer-events: none; /* Let drag pass through to table */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="table">
+        <div id="menu">
+            <h1 style="font-size: 4rem; margin-bottom: 10px; text-shadow: 2px 2px #000;">LIGRETTO</h1>
+            <p style="max-width: 600px; text-align: center; margin-bottom: 30px; line-height: 1.5;">
+                <strong>Realismus-Modus:</strong><br>
+                Zieh deine Karten in die Mitte! "1er" kannst du überall ablegen, den Rest musst du auf die Stapel werfen.
+                Wenn eine Lücke in deiner 3er-Reihe entsteht, zieh eine Karte vom Ligretto-Stapel hinein.
+                Handstapel leer? Klick auf die Ablage zum Zurücklegen, klick nochmal zum <em>Mischen</em>!
+            </p>
+            <button onclick="startGame()">An den Tisch setzen</button>
+        </div>
+
+        <div class="bot-area" id="bot1">Bot 1: 10</div>
+        <div class="bot-area" id="bot2">Bot 2: 10</div>
+        <div class="bot-area" id="bot3">Bot 3: 10</div>
+
+        <div id="center-area"></div>
+
+        <div id="player-area" style="display: none;">
+            <div class="zone">
+                <div class="slot" id="slot-deck">
+                    <div class="slot-label">Stapel</div>
+                </div>
+                <div class="slot" id="slot-discard">
+                    <div class="slot-label">Ablage</div>
+                </div>
+            </div>
+            <div class="zone">
+                <div class="slot" id="slot-row-0"></div>
+                <div class="slot" id="slot-row-1"></div>
+                <div class="slot" id="slot-row-2"></div>
+                <div class="slot-label" style="bottom: -25px; width: 100%; text-align: center;">Deine Reihe</div>
+            </div>
+            <div class="zone">
+                <div class="slot" id="slot-ligretto" style="border-color: #f39c12;">
+                    <div class="slot-label" style="color: #f39c12; font-weight: bold;">LIGRETTO</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const COLORS = ['red', 'blue', 'green', 'yellow'];
+        const TABLE = document.getElementById('table');
+        let zIndexCounter = 100;
+        let botIntervals = [];
+
+        // Game State
+        let state = {
+            centerPiles: [], // { color, number, x, y, el }
+            gameOver: false,
+            player: { ligretto: [], row: [null, null, null], deck: [], discard: [], shuffleState: 0 },
+            bots: {
+                bot1: { ligretto: 10, deck: createDeck(), discard: [], x: 100, y: 20 },
+                bot2: { ligretto: 10, deck: createDeck(), discard: [], x: window.innerWidth/2, y: 20 },
+                bot3: { ligretto: 10, deck: createDeck(), discard: [], x: window.innerWidth - 100, y: 20 }
+            }
+        };
+
+        // --- Utils & Setup ---
+        function createDeck() {
+            let deck = [];
+            COLORS.forEach(c => { for (let i = 1; i <= 10; i++) deck.push({ color: c, number: i }); });
+            return deck.sort(() => Math.random() - 0.5);
+        }
+
+        function createCardDOM(card, isBack = false) {
+            let el = document.createElement('div');
+            el.className = `card ${isBack ? 'back' : card.color}`;
+            if (!isBack) el.innerText = card.number;
+            return el;
+        }
+
+        // --- Player Interaction Logic ---
+        function renderPlayerCards() {
+            if(state.gameOver) return;
+            const p = state.player;
+
+            // 1. Ligretto
+            const slotLigretto = document.getElementById('slot-ligretto');
+            slotLigretto.innerHTML = '<div class="slot-label" style="color: #f39c12; font-weight: bold;">LIGRETTO</div>';
+            if (p.ligretto.length > 0) {
+                let card = p.ligretto[p.ligretto.length - 1];
+                let el = createCardDOM(card);
+                el.style.top = '0'; el.style.left = '0';
+                makeDraggable(el, { source: 'ligretto' }, card);
+                
+                let badge = document.createElement('div');
+                badge.className = 'count-badge';
+                badge.innerText = p.ligretto.length;
+                el.appendChild(badge);
+                slotLigretto.appendChild(el);
+            } else if (!state.gameOver) {
+                win('DU');
+            }
+
+            // 2. Row
+            for (let i = 0; i < 3; i++) {
+                const slot = document.getElementById(`slot-row-${i}`);
+                slot.innerHTML = '';
+                if (p.row[i]) {
+                    let el = createCardDOM(p.row[i]);
+                    el.style.top = '0'; el.style.left = '0';
+                    makeDraggable(el, { source: 'row', index: i }, p.row[i]);
+                    slot.appendChild(el);
+                }
+            }
+
+            // 3. Deck & Discard
+            const slotDeck = document.getElementById('slot-deck');
+            const slotDiscard = document.getElementById('slot-discard');
+            slotDeck.innerHTML = '<div class="slot-label">Stapel</div>';
+            slotDiscard.innerHTML = '<div class="slot-label">Ablage</div>';
+
+            if (p.deck.length > 0) {
+                let deckEl = createCardDOM(null, true);
+                deckEl.style.top = '0'; deckEl.style.left = '0';
+                deckEl.onclick = drawThree;
+                slotDeck.appendChild(deckEl);
+            } else if (p.discard.length > 0 && p.shuffleState === 1) {
+                // Deck awaits shuffling
+                let deckEl = createCardDOM(null, true);
+                deckEl.style.top = '0'; deckEl.style.left = '0';
+                deckEl.onclick = shuffleDeck;
+                slotDeck.appendChild(deckEl);
+            }
+
+            if (p.discard.length > 0) {
+                let card = p.discard[p.discard.length - 1];
+                let el = createCardDOM(card);
+                el.style.top = '0'; el.style.left = '0';
+                if (p.deck.length === 0 && p.shuffleState === 0) {
+                    // Click discard to move to deck
+                    el.onclick = () => { p.shuffleState = 1; renderPlayerCards(); };
+                    el.style.cursor = 'pointer';
+                } else {
+                    makeDraggable(el, { source: 'discard' }, card);
+                }
+                slotDiscard.appendChild(el);
+            }
+        }
+
+        function drawThree() {
+            let p = state.player;
+            for(let i=0; i<3; i++) {
+                if(p.deck.length > 0) p.discard.push(p.deck.shift());
+            }
+            renderPlayerCards();
+        }
+
+        function shuffleDeck() {
+            let p = state.player;
+            let deckEl = document.getElementById('slot-deck').querySelector('.card');
+            if(deckEl) deckEl.classList.add('shuffling');
+            
+            setTimeout(() => {
+                p.deck = p.discard.reverse();
+                p.discard = [];
+                p.shuffleState = 0;
+                renderPlayerCards();
+            }, 800); // 0.8s realistische Misch-Verzögerung
+        }
+
+        // --- Drag & Drop Physics ---
+        let draggedEl = null;
+        let dragData = null;
+        let dragStartRect = null;
+        let offset = {x: 0, y: 0};
+
+        function makeDraggable(el, meta, cardObj) {
+            el.addEventListener('pointerdown', (e) => {
+                if(e.button !== 0 && e.type !== 'touchstart') return; // Only left click or touch
+                e.preventDefault();
+                
+                dragData = { meta, cardObj, originalParent: el.parentElement };
+                dragStartRect = el.getBoundingClientRect();
+                
+                offset.x = e.clientX - dragStartRect.left;
+                offset.y = e.clientY - dragStartRect.top;
+
+                // Move out of layout flow and attach to table for free movement
+                TABLE.appendChild(el);
+                el.style.position = 'absolute';
+                el.style.zIndex = zIndexCounter++;
+                el.style.left = dragStartRect.left + 'px';
+                el.style.top = dragStartRect.top + 'px';
+                el.style.transform = 'scale(1.1) rotate(2deg)';
+                draggedEl = el;
+            });
+        }
+
+        window.addEventListener('pointermove', (e) => {
+            if (!draggedEl) return;
+            draggedEl.style.left = (e.clientX - offset.x) + 'px';
+            draggedEl.style.top = (e.clientY - offset.y) + 'px';
+        });
+
+        window.addEventListener('pointerup', (e) => {
+            if (!draggedEl) return;
+            
+            let dropX = e.clientX;
+            let dropY = e.clientY;
+            
+            let success = evaluateDrop(dropX, dropY, dragData);
+
+            if (!success) {
+                // Snap back
+                draggedEl.style.transition = 'all 0.2s';
+                draggedEl.style.left = dragStartRect.left + 'px';
+                draggedEl.style.top = dragStartRect.top + 'px';
+                draggedEl.style.transform = 'none';
+                
+                let elToReturn = draggedEl;
+                setTimeout(() => {
+                    if(dragData.originalParent && elToReturn.parentElement === TABLE) {
+                        elToReturn.style.position = 'absolute';
+                        elToReturn.style.top = '0'; elToReturn.style.left = '0';
+                        elToReturn.style.transition = 'none';
+                        dragData.originalParent.appendChild(elToReturn);
+                    }
+                }, 200);
+            }
+
+            draggedEl = null;
+            dragData = null;
+        });
+
+        function evaluateDrop(x, y, data) {
+            let card = data.cardObj;
+            let meta = data.meta;
+
+            // 1. Check if dropped on empty Row slot (only allowed from Ligretto)
+            if (meta.source === 'ligretto') {
+                for (let i = 0; i < 3; i++) {
+                    if (state.player.row[i] === null) {
+                        let slotRect = document.getElementById(`slot-row-${i}`).getBoundingClientRect();
+                        // Collison check
+                        if (x > slotRect.left && x < slotRect.right && y > slotRect.top && y < slotRect.bottom) {
+                            state.player.row[i] = state.player.ligretto.pop();
+                            removeDOMElement(draggedEl);
+                            renderPlayerCards();
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            // 2. Check center area limits
+            let centerRect = document.getElementById('center-area').getBoundingClientRect();
+            if (y > centerRect.bottom || y < centerRect.top) return false;
+
+            // 3. Placing in center
+            if (card.number === 1) {
+                // New pile! Drop exactly where mouse is.
+                addToCenter(card, x - varCardW()/2, y - varCardH()/2);
+                removeFromPlayerSource(meta);
+                return true;
+            } else {
+                // Find matching pile
+                for (let pile of state.centerPiles) {
+                    if (pile.color === card.color && pile.number === card.number - 1) {
+                        // Is mouse close enough? (Realism: Snap radius 100px)
+                        let dist = Math.hypot(pile.x + varCardW()/2 - x, pile.y + varCardH()/2 - y);
+                        if (dist < 120) {
+                            pile.number = card.number;
+                            // Add slight chaotic offset/rotation
+                            pile.x += (Math.random() - 0.5) * 10;
+                            pile.y += (Math.random() - 0.5) * 10;
+                            
+                            placeCardOnTable(card, pile.x, pile.y);
+                            removeFromPlayerSource(meta);
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        function removeFromPlayerSource(meta) {
+            let p = state.player;
+            if (meta.source === 'ligretto') p.ligretto.pop();
+            if (meta.source === 'row') p.row[meta.index] = null;
+            if (meta.source === 'discard') p.discard.pop();
+            removeDOMElement(draggedEl);
+            renderPlayerCards();
+        }
+
+        function removeDOMElement(el) {
+            if(el && el.parentNode) el.parentNode.removeChild(el);
+        }
+
+        function varCardW() { return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-w')); }
+        function varCardH() { return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-h')); }
+
+        // --- Center Table Logic ---
+        function addToCenter(card, x, y) {
+            state.centerPiles.push({ color: card.color, number: card.number, x: x, y: y });
+            placeCardOnTable(card, x, y);
+        }
+
+        function placeCardOnTable(card, x, y) {
+            let el = createCardDOM(card);
+            el.classList.add('center-card');
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            el.style.zIndex = zIndexCounter++;
+            // Random rotation for realism
+            let rot = (Math.random() - 0.5) * 30;
+            el.style.transform = `rotate(${rot}deg)`;
+            TABLE.appendChild(el);
+        }
+
+        // --- Bot Logic ---
+        function playBot(botId) {
+            if (state.gameOver) return;
+            let b = state.bots[botId];
+
+            // Bots cheat slightly by looking at their "virtual" row and top cards
+            // To simulate realism, they draw cards internally and look for matches.
+            
+            // 1. Try to play from virtual ligretto
+            if (b.ligretto > 0) {
+                let simCard = { color: COLORS[Math.floor(Math.random()*4)], number: Math.floor(Math.random()*10)+1 }; // Simulated top card
+                if(tryBotPlay(botId, b, simCard, true)) return;
+            }
+
+            // 2. Cycle deck
+            if (b.deck.length === 0) {
+                b.deck = b.discard.reverse();
+                b.discard = [];
+            } else {
+                b.discard.push(b.deck.shift());
+                let topDiscard = b.discard[b.discard.length - 1];
+                tryBotPlay(botId, b, topDiscard, false);
+            }
+        }
+
+        function tryBotPlay(botId, botObj, card, isLigretto) {
+            if(state.gameOver) return false;
+
+            // Check if can play
+            let targetPile = null;
+            if (card.number === 1) {
+                targetPile = "new";
+            } else {
+                targetPile = state.centerPiles.find(p => p.color === card.color && p.number === card.number - 1);
+            }
+
+            if (targetPile) {
+                if (isLigretto) {
+                    botObj.ligretto--;
+                    document.getElementById(botId).innerText = `Bot ${botId.replace('bot','')} : ${botObj.ligretto}`;
+                    if (botObj.ligretto <= 0) { win(`Bot ${botId.replace('bot','')}`); return true; }
+                }
+
+                // Animate card flying from bot
+                animateBotCard(botObj.x, botObj.y, card, targetPile);
+                return true;
+            }
+            return false;
+        }
+
+        function animateBotCard(startX, startY, card, targetPile) {
+            let el = createCardDOM(card);
+            el.classList.add('bot-card');
+            el.style.left = startX + 'px';
+            el.style.top = startY + 'px';
+            el.style.zIndex = zIndexCounter++;
+            TABLE.appendChild(el);
+
+            // Calculate Target
+            let targetX, targetY;
+            if (targetPile === "new") {
+                // Random center coords
+                let centerRect = document.getElementById('center-area').getBoundingClientRect();
+                targetX = centerRect.left + Math.random() * (centerRect.width - varCardW());
+                targetY = centerRect.top + Math.random() * (centerRect.height - varCardH());
+                state.centerPiles.push({ color: card.color, number: card.number, x: targetX, y: targetY });
+            } else {
+                targetX = targetPile.x + (Math.random() - 0.5) * 10;
+                targetY = targetPile.y + (Math.random() - 0.5) * 10;
+                targetPile.number = card.number;
+                targetPile.x = targetX; 
+                targetPile.y = targetY;
+            }
+
+            // Trigger animation next frame
+            requestAnimationFrame(() => {
+                el.style.transform = `translate(${targetX - startX}px, ${targetY - startY}px) rotate(${(Math.random()-0.5)*30}deg)`;
+            });
+
+            // Convert to static center card after animation
+            setTimeout(() => {
+                if(state.gameOver) return;
+                el.classList.remove('bot-card');
+                el.classList.add('center-card');
+                el.style.transform = `rotate(${(Math.random()-0.5)*30}deg)`;
+                el.style.left = targetX + 'px';
+                el.style.top = targetY + 'px';
+            }, 400);
+        }
+
+        // --- Game Flow ---
+        function startGame() {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('player-area').style.display = 'flex';
+            
+            // Setup Player Deck
+            let fullDeck = createDeck();
+            state.player.ligretto = fullDeck.splice(0, 10);
+            state.player.row = fullDeck.splice(0, 3);
+            state.player.deck = fullDeck; // remaining 27
+
+            renderPlayerCards();
+
+            // Start Bots (unpredictable intervals for realism)
+            botIntervals.push(setInterval(() => playBot('bot1'), 1800));
+            botIntervals.push(setInterval(() => playBot('bot2'), 2100));
+            botIntervals.push(setInterval(() => playBot('bot3'), 1900));
+        }
+
+        function win(name) {
+            state.gameOver = true;
+            botIntervals.forEach(clearInterval);
+            
+            setTimeout(() => {
+                let overlay = document.getElementById('menu');
+                overlay.style.display = 'flex';
+                overlay.innerHTML = `
+                    <h1 style="font-size: 5rem; color: #e74c3c; text-shadow: 2px 2px #000;">LIGRETTO STOP!</h1>
+                    <h2 style="font-size: 3rem;">${name} HAT GEWONNEN!</h2>
+                    <button style="margin-top: 30px;" onclick="location.reload()">Neues Spiel</button>
+                `;
+            }, 500);
+        }
+
+    </script>
+</body>
+</html>
