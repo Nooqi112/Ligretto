@@ -3,583 +3,594 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Realistisches Ligretto</title>
+    <title>LIGRETTO OMNI-TITAN X | SUPREME EDITION 4.0</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;500;800&family=Inter:wght@100;300;400;700;900&display=swap" rel="stylesheet">
+    
     <style>
+        /* ================================================================
+           LIGRETTO OMNI-TITAN X - SUPREME ARCHITECTURE V4.0
+           DEVELOPED FOR HIGH-STAKES CARD SIMULATION
+           LAUNCH READY: 21:05:00
+           ================================================================
+        */
+
         :root {
-            --red: #c0392b;
-            --blue: #2980b9;
-            --green: #27ae60;
-            --yellow: #f39c12;
-            --card-w: 80px;
-            --card-h: 115px;
+            --steam-blue: #66c0f4;
+            --steam-dark: #171a21;
+            --steam-nav: #1b2838;
+            --accent: #00d2ff;
+            --gold: #ffcf00;
+            --danger: #ff4757;
+            --success: #2ed573;
+            --card-w: 95px;
+            --card-h: 140px;
+            --c-red: #ff4757;
+            --c-blue: #2e86de;
+            --c-green: #2ed573;
+            --c-yellow: #ffa502;
+            --font-main: 'Inter', sans-serif;
+            --font-head: 'Orbitron', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
         }
 
-        body {
-            margin: 0; padding: 0;
-            background: #1e5128 url('https://www.transparenttextures.com/patterns/felt.png'); /* Realistischer Filz-Look */
-            font-family: 'Arial', sans-serif;
-            overflow: hidden;
-            touch-action: none; /* Verhindert Scrollen auf Mobile beim Draggen */
-            user-select: none;
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; outline: none; }
+        
+        body, html { 
+            margin: 0; padding: 0; width: 100vw; height: 100vh;
+            background: #000; color: #c6d4df; font-family: var(--font-main);
+            overflow: hidden; cursor: none;
         }
 
-        #table {
-            width: 100vw; height: 100vh;
-            position: relative;
-        }
-
-        /* UI Overlays */
-        #menu {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
+        /* --- CINEMATIC INTRO SYSTEM --- */
+        #intro-engine {
+            position: fixed; inset: 0; background: #000; z-index: 1000000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 10000; color: white;
         }
-        #menu button {
-            padding: 15px 40px; font-size: 1.5rem; cursor: pointer;
-            border: none; border-radius: 8px; background: #f39c12; color: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5); font-weight: bold;
+        .intro-glitch {
+            font-family: var(--font-head); font-size: 4rem; color: #fff;
+            letter-spacing: 20px; text-transform: uppercase;
+            animation: glitchReveal 3.5s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+        }
+        .intro-sub {
+            font-family: var(--font-mono); font-size: 0.8rem; color: var(--steam-blue);
+            margin-top: 20px; opacity: 0; animation: fadeIn 1s 2s forwards;
+        }
+        @keyframes glitchReveal {
+            0% { opacity: 0; transform: scale(0.9); filter: blur(20px); letter-spacing: 40px; }
+            50% { opacity: 1; transform: scale(1); filter: blur(0); letter-spacing: 20px; }
+            100% { opacity: 0; transform: scale(1.1); filter: blur(10px); }
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- DYNAMIC UI CURSOR --- */
+        #ui-cursor {
+            position: fixed; width: 30px; height: 30px; border: 2px solid #fff;
+            border-radius: 50%; pointer-events: none; z-index: 2000000;
+            transform: translate(-50%, -50%); box-shadow: 0 0 25px var(--accent);
+            mix-blend-mode: difference; transition: transform 0.1s ease-out, width 0.2s, height 0.2s;
         }
 
-        /* Bot Areas */
-        .bot-area {
-            position: absolute;
-            background: rgba(0,0,0,0.3); padding: 10px 20px;
-            border-radius: 10px; color: white; font-weight: bold;
-            pointer-events: none;
-        }
-        #bot1 { top: 20px; left: 20px; }
-        #bot2 { top: 20px; left: 50%; transform: translateX(-50%); }
-        #bot3 { top: 20px; right: 20px; }
-
-        /* Player Area */
-        #player-area {
-            position: absolute; bottom: 20px; left: 50%;
-            transform: translateX(-50%);
-            display: flex; gap: 40px;
-            background: rgba(0,0,0,0.4); padding: 20px;
-            border-radius: 15px; border: 2px solid rgba(255,255,255,0.1);
-        }
-
-        .zone {
-            display: flex; gap: 15px; position: relative;
-        }
-
-        .slot {
-            width: var(--card-w); height: var(--card-h);
-            border: 2px dashed rgba(255,255,255,0.4);
-            border-radius: 8px;
-            box-sizing: border-box;
-            position: relative;
-        }
-        .slot-label {
-            position: absolute; bottom: -25px; width: 100%;
-            text-align: center; color: rgba(255,255,255,0.7); font-size: 0.8rem;
-        }
-
-        /* Cards */
-        .card {
-            width: var(--card-w); height: var(--card-h);
-            background: white; border-radius: 8px;
-            position: absolute;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 3rem; font-weight: bold;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
-            box-sizing: border-box; border: 4px solid white;
-            cursor: grab;
-            transition: transform 0.1s;
-        }
-        .card:active { cursor: grabbing; }
-        .card.back {
-            background: repeating-linear-gradient(45deg, #2c3e50, #2c3e50 10px, #34495e 10px, #34495e 20px);
-            border-color: white; color: transparent; cursor: pointer;
+        /* --- CENTRAL DASHBOARD --- */
+        #dashboard { 
+            position: fixed; inset: 0; display: flex; flex-direction: column; 
+            background: var(--steam-dark); z-index: 1000; visibility: hidden;
         }
         
-        .card.red { color: var(--red); border-color: var(--red); }
-        .card.blue { color: var(--blue); border-color: var(--blue); }
-        .card.green { color: var(--green); border-color: var(--green); }
-        .card.yellow { color: var(--yellow); border-color: var(--yellow); }
-
-        .card.center-card {
-            pointer-events: none; /* Karten in der Mitte können nicht mehr bewegt werden */
-            box-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        header { 
+            height: 85px; background: var(--steam-nav); display: flex; 
+            align-items: center; padding: 0 50px; gap: 45px; 
+            border-bottom: 1px solid rgba(255,255,255,0.05); 
         }
 
-        .card.bot-card {
-            transition: all 0.4s ease-out; /* Animation für fliegende Bot-Karten */
-            z-index: 9000;
+        .nav-item { 
+            font-family: var(--font-head); font-size: 0.85rem; color: #8f98a0; 
+            cursor: pointer; padding: 15px 0; position: relative; transition: 0.3s;
+        }
+        .nav-item:hover { color: #fff; }
+        .nav-item.active { color: #fff; border-bottom: 3px solid var(--steam-blue); }
+
+        /* --- CONTENT ARCHITECTURE --- */
+        #content-grid { 
+            flex: 1; display: grid; grid-template-columns: 400px 1fr; 
+            padding: 45px; gap: 45px; overflow: hidden; 
         }
 
-        .card.shuffling {
-            animation: shuffleAnim 0.5s infinite;
-            pointer-events: none;
+        .panel-sidebar { 
+            background: linear-gradient(180deg, rgba(30,45,65,0.5) 0%, rgba(10,15,25,0.8) 100%); 
+            border-radius: 6px; padding: 45px; border: 1px solid rgba(255,255,255,0.03); 
+            display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
 
-        @keyframes shuffleAnim {
-            0% { transform: translateX(0) rotate(0); }
-            25% { transform: translateX(-10px) rotate(-5deg); }
-            50% { transform: translateX(10px) rotate(5deg); }
-            75% { transform: translateX(-5px) rotate(-2deg); }
-            100% { transform: translateX(0) rotate(0); }
+        .avatar-frame { 
+            width: 100%; aspect-ratio: 1; border: 3px solid var(--steam-blue); 
+            border-radius: 6px; background-size: cover; margin-bottom: 35px;
+            filter: grayscale(0.2) contrast(1.1);
         }
 
-        .count-badge {
-            position: absolute; top: -15px; right: -15px;
-            background: #e74c3c; color: white; border-radius: 50%;
-            width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            z-index: 10;
+        .view-section { display: none; height: 100%; flex-direction: column; overflow-y: auto; padding-right: 15px; }
+        .view-section.active { display: flex; }
+
+        /* --- SHOP / MARKETPLACE --- */
+        .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 30px; }
+        .market-card { 
+            background: #1b2838; border: 1px solid #333; border-radius: 4px; 
+            overflow: hidden; transition: transform 0.3s, border-color 0.3s;
+        }
+        .market-card:hover { transform: translateY(-8px); border-color: var(--accent); }
+        .market-img { height: 130px; width: 100%; background: #000; }
+        .market-info { padding: 25px; }
+
+        /* --- BATTLE ARENA --- */
+        #arena { position: fixed; inset: 0; background: #000; z-index: 5000; display: none; flex-direction: column; }
+        
+        #combat-zone { 
+            flex: 1; position: relative; perspective: 3000px; 
+            background: radial-gradient(circle at center, #1b2838 0%, #05070a 100%);
+            overflow: hidden; 
         }
 
-        /* Center Drop Area restriction */
-        #center-area {
-            position: absolute;
-            top: 80px; left: 50px; right: 50px; bottom: 250px;
-            /* background: rgba(255,0,0,0.1); /* Debug */
-            pointer-events: none; /* Let drag pass through to table */
+        #battle-table { 
+            width: 1800px; height: 950px; background: #133d2a; 
+            border: 60px solid #2a1b0d; border-radius: 450px;
+            position: absolute; left: 50%; top: 50%; 
+            transform: translate(-50%, -52%) rotateX(24deg) scale(0.74);
+            box-shadow: 0 150px 300px rgba(0,0,0,1); transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* --- BOT COMPONENTS --- */
+        .bot-entity { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .bot-visage { width: 90px; height: 90px; border: 3px solid #444; border-radius: 50%; background: #111; background-size: cover; box-shadow: 0 0 30px rgba(0,0,0,0.8); }
+        .bot-data { background: rgba(0,0,0,0.9); padding: 8px 20px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.8rem; border: 1px solid #333; }
+
+        /* --- NOTIFICATION SYSTEM --- */
+        #notice-layer {
+            position: fixed; top: 120px; left: 50%; transform: translateX(-50%);
+            z-index: 10000; pointer-events: none; text-align: center;
+        }
+        .notice-toast {
+            background: rgba(102, 192, 244, 0.9); color: #000; padding: 15px 40px;
+            font-family: var(--font-head); font-weight: 900; border-radius: 50px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); transform: translateY(50px);
+            opacity: 0; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .notice-toast.active { transform: translateY(0); opacity: 1; }
+
+        /* --- HUD ARCHITECTURE --- */
+        #hud-control { 
+            height: 220px; background: rgba(10, 15, 25, 0.98); 
+            display: flex; justify-content: center; align-items: center; 
+            gap: 40px; border-top: 2px solid #333; box-shadow: 0 -20px 50px rgba(0,0,0,0.8);
+        }
+        .slot-frame { 
+            width: 110px; height: 160px; border: 3px dashed #222; 
+            border-radius: 12px; position: relative; transition: 0.3s;
+        }
+        .slot-frame.highlight { border-color: var(--accent); background: rgba(0,210,255,0.05); }
+
+        /* --- BUTTONS --- */
+        .btn-supreme {
+            background: linear-gradient(to right, #75b022, #588a1b);
+            color: #fff; border: none; padding: 25px; border-radius: 4px;
+            font-family: var(--font-head); font-weight: 900; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 2px; transition: 0.3s;
+        }
+        .btn-supreme:hover { filter: brightness(1.2); box-shadow: 0 0 30px rgba(117,176,34,0.4); }
+
+        /* --- CARD ENTITY --- */
+        .card { 
+            width: var(--card-w); height: var(--card-h); border-radius: 12px; 
+            background: #fff; border: 8px solid #fff; position: absolute;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; font-weight: 900; color: #000;
+            font-family: var(--font-head); box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .card.red { border-color: var(--c-red); color: var(--c-red); }
+        .card.blue { border-color: var(--c-blue); color: var(--c-blue); }
+        .card.green { border-color: var(--c-green); color: var(--c-green); }
+        .card.yellow { border-color: var(--c-yellow); color: var(--c-yellow); }
+        .card.back { background: #111; border-color: #222; }
+
+        /* --- MODAL SYSTEM --- */
+        .overlay-dim { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.96); 
+            z-index: 100000; display: none; align-items: center; justify-content: center; 
+        }
+        .modal-body { 
+            background: var(--steam-nav); padding: 60px; border-radius: 4px; 
+            width: 650px; border-top: 8px solid var(--steam-blue); 
+            box-shadow: 0 50px 100px rgba(0,0,0,0.8);
         }
 
     </style>
 </head>
 <body>
 
-    <div id="table">
-        <div id="menu">
-            <h1 style="font-size: 4rem; margin-bottom: 10px; text-shadow: 2px 2px #000;">LIGRETTO</h1>
-            <p style="max-width: 600px; text-align: center; margin-bottom: 30px; line-height: 1.5;">
-                <strong>Realismus-Modus:</strong><br>
-                Zieh deine Karten in die Mitte! "1er" kannst du überall ablegen, den Rest musst du auf die Stapel werfen.
-                Wenn eine Lücke in deiner 3er-Reihe entsteht, zieh eine Karte vom Ligretto-Stapel hinein.
-                Handstapel leer? Klick auf die Ablage zum Zurücklegen, klick nochmal zum <em>Mischen</em>!
-            </p>
-            <button onclick="startGame()">An den Tisch setzen</button>
-        </div>
+<div id="intro-engine">
+    <div class="intro-glitch">LIGRETTO OMNI X</div>
+    <div class="intro-sub">INITIALIZING CORE NEURAL NETWORK...</div>
+</div>
 
-        <div class="bot-area" id="bot1">Bot 1: 10</div>
-        <div class="bot-area" id="bot2">Bot 2: 10</div>
-        <div class="bot-area" id="bot3">Bot 3: 10</div>
+<div id="ui-cursor"></div>
 
-        <div id="center-area"></div>
+<div id="notice-layer">
+    <div id="shuffle-toast" class="notice-toast">STAPEL LEER! BITTE MISCHEN (KLICK)</div>
+</div>
 
-        <div id="player-area" style="display: none;">
-            <div class="zone">
-                <div class="slot" id="slot-deck">
-                    <div class="slot-label">Stapel</div>
-                </div>
-                <div class="slot" id="slot-discard">
-                    <div class="slot-label">Ablage</div>
+<div id="dashboard">
+    <header>
+        <div class="nav-item active" onclick="ui.tab('lib')">BIBLIOTHEK</div>
+        <div class="nav-item" onclick="ui.tab('shop')">MARKTPLATZ</div>
+        <div class="nav-item" onclick="ui.tab('rules')">REGELWERK</div>
+        <div class="nav-item" onclick="ui.tab('settings')">KONFIGURATION</div>
+        <div style="margin-left: auto; color: var(--gold); font-family: var(--font-mono); font-size: 1.3rem;" id="ui-cash">500 CR</div>
+    </header>
+
+    <div id="content-grid">
+        <aside class="panel-sidebar">
+            <div class="avatar-frame" id="ui-profile-pic"></div>
+            <div style="margin-bottom: 30px;">
+                <span style="font-size: 0.65rem; color: #555; font-weight: 800; letter-spacing: 1px;">OPERATOR_ID</span><br>
+                <span id="ui-op-name" style="font-family: var(--font-head); font-size: 1.6rem; color: #fff;">GAST_UNDEFINED</span>
+            </div>
+            <div style="margin-bottom: 30px;">
+                <span style="font-size: 0.65rem; color: #555; font-weight: 800;">CURRENT RANK</span><br>
+                <span style="color: var(--accent); font-weight: 900; letter-spacing: 2px;">NEOPHYTE</span>
+            </div>
+            <button class="btn-supreme" onclick="ui.modal('launch')">MISSION STARTEN</button>
+        </aside>
+
+        <main id="view-port">
+            <div id="pane-lib" class="view-section active">
+                <h1 style="font-family: var(--font-head); font-size: 4.5rem; color: #fff; margin:0; line-height: 1;">SYSTEM<br><span style="color:var(--steam-blue)">ONLINE</span></h1>
+                <p style="font-size: 1.3rem; max-width: 800px; line-height: 1.7; color: #8f98a0; margin-top: 30px;">
+                    Willkommen zur V4.0 Supreme Simulation. Alle Kerne sind stabil. Der Shop wurde mit neuen Materialien bestückt. 
+                    Bereit für den 21:05 Release.
+                </p>
+                <div style="margin-top: auto; background: rgba(0,0,0,0.3); padding: 30px; border-left: 5px solid var(--steam-blue);">
+                    <h4 style="margin:0; font-family:var(--font-head);">LAST LOG</h4>
+                    <p id="ui-last-log" style="font-family:var(--font-mono); font-size:0.8rem; margin:10px 0 0 0;">Keine vorherigen Missionen aufgezeichnet.</p>
                 </div>
             </div>
-            <div class="zone">
-                <div class="slot" id="slot-row-0"></div>
-                <div class="slot" id="slot-row-1"></div>
-                <div class="slot" id="slot-row-2"></div>
-                <div class="slot-label" style="bottom: -25px; width: 100%; text-align: center;">Deine Reihe</div>
+
+            <div id="pane-shop" class="view-section">
+                <h2 style="font-family: var(--font-head); letter-spacing: 3px;">TECHNIK-MARKT</h2>
+                <div class="market-grid" id="market-container">
+                    </div>
             </div>
-            <div class="zone">
-                <div class="slot" id="slot-ligretto" style="border-color: #f39c12;">
-                    <div class="slot-label" style="color: #f39c12; font-weight: bold;">LIGRETTO</div>
+
+            <div id="pane-rules" class="view-section">
+                <h2 style="font-family: var(--font-head);">OPERATIONS-PROTOKOLL</h2>
+                <div style="background:#0b1018; padding:40px; border:1px solid #222; border-radius:4px;">
+                    <h3 style="color:var(--steam-blue); font-family:var(--font-head);">I. DAS ZIEL</h3>
+                    <p>Leeren Sie Ihren Ligretto-Stapel (10 Einheiten). Jede abgelegte Karte erhöht Ihren Score. Das Match endet, sobald ein Operator 100 Punkte erreicht.</p>
+                    <h3 style="color:var(--steam-blue); font-family:var(--font-head); margin-top:30px;">II. SCORING</h3>
+                    <ul style="font-family:var(--font-mono); font-size:0.9rem; line-height:2;">
+                        <li>ABGELEGTE KARTEN: <span style="color:var(--success);">+2 PUNKTE</span></li>
+                        <li>VERBLEIB IM STAPEL: <span style="color:var(--danger);">-2 PUNKTE</span></li>
+                    </ul>
+                    <h3 style="color:var(--steam-blue); font-family:var(--font-head); margin-top:30px;">III. MISCHEN</h3>
+                    <p>Wenn Ihr Nachziehstapel leer ist, erscheint eine Warnung. Klicken Sie auf den leeren Slot, um die Karten zurückzusetzen.</p>
                 </div>
             </div>
+
+            <div id="pane-settings" class="view-section">
+                <h2 style="font-family: var(--font-head);">KONFIGURATION</h2>
+                <div style="max-width: 600px; background:rgba(255,255,255,0.02); padding:40px; border-radius:4px;">
+                    <label style="font-size:0.7rem; color:#555; font-weight:900;">DESIGN-AUSWAHL (Nur gekaufte)</label>
+                    <select id="cfg-theme-select" onchange="ui.applyTheme(this.value)" style="width:100%; padding:20px; background:#000; color:#fff; border:1px solid #333; margin:15px 0; font-family:var(--font-mono);"></select>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div id="arena">
+    <button class="btn-supreme" style="position:fixed; top:35px; right:50px; padding:15px 30px; background:var(--danger); z-index:10000;" onclick="engine.terminate()">ABBRECHEN</button>
+    <div id="combat-zone">
+        <div id="battle-table">
+            <div class="bot-entity" style="top: -140px; left: 50%; transform: translateX(-50%);">
+                <div class="bot-visage" style="background-image:url('https://api.dicebear.com/7.x/bottts-neutral/svg?seed=X1')"></div>
+                <div class="bot-data" id="bot-0-ui">NEURAL_ALPHA: 10</div>
+            </div>
+            <div class="bot-entity" style="left: -200px; top: 50%; transform: translateY(-50%) rotate(-90deg);">
+                <div class="bot-visage" style="background-image:url('https://api.dicebear.com/7.x/bottts-neutral/svg?seed=X2')"></div>
+                <div class="bot-data" id="bot-1-ui">NEURAL_BETA: 10</div>
+            </div>
+            <div class="bot-entity" style="right: -200px; top: 50%; transform: translateY(-50%) rotate(90deg);">
+                <div class="bot-visage" style="background-image:url('https://api.dicebear.com/7.x/bottts-neutral/svg?seed=X3')"></div>
+                <div class="bot-data" id="bot-2-ui">NEURAL_OMEGA: 10</div>
+            </div>
+            <div id="pile-container" style="position:absolute; inset:60px;"></div>
         </div>
     </div>
+    <div id="hud-control">
+        <div class="slot-frame" id="slot-draw" onclick="engine.draw()"></div>
+        <div class="slot-frame" id="slot-discard"></div>
+        <div style="width:60px;"></div>
+        <div class="slot-frame" id="slot-row-0"></div>
+        <div class="slot-frame" id="slot-row-1"></div>
+        <div class="slot-frame" id="slot-row-2"></div>
+        <div style="width:60px;"></div>
+        <div class="slot-frame" id="slot-ligretto" style="border-color:var(--accent);">
+            <div id="ligretto-counter" style="position:absolute; top:-50px; width:100%; text-align:center; font-family:var(--font-head); color:var(--accent); font-size:2.5rem; font-weight:900;">10</div>
+        </div>
+    </div>
+</div>
 
-    <script>
-        const COLORS = ['red', 'blue', 'green', 'yellow'];
-        const TABLE = document.getElementById('table');
-        let zIndexCounter = 100;
-        let botIntervals = [];
+<div id="modal-launch" class="overlay-dim">
+    <div class="modal-body">
+        <h2 style="font-family:var(--font-head); margin-bottom:40px;">MISSION INITIALISIEREN</h2>
+        <input type="text" id="op-name-input" placeholder="Operator Name..." style="width:100%; padding:25px; background:#000; border:1px solid #333; color:#fff; font-family:var(--font-mono); font-size:1.2rem; margin-bottom:30px;">
+        <p style="font-size:0.7rem; color:#555;">KI-INTELLIGENZSTUFE</p>
+        <select id="op-difficulty" style="width:100%; padding:20px; background:#000; color:#fff; border:1px solid #333; margin-bottom:40px; font-family:var(--font-mono);">
+            <option value="3500">TRAINING (REDUZIERT)</option>
+            <option value="1800" selected>COMBAT (STANDARD)</option>
+            <option value="800">WARZONE (ELITE)</option>
+        </select>
+        <button class="btn-supreme" style="width:100%;" onclick="engine.init()">LAUNCH</button>
+    </div>
+</div>
 
-        // Game State
-        let state = {
-            centerPiles: [], // { color, number, x, y, el }
-            gameOver: false,
-            player: { ligretto: [], row: [null, null, null], deck: [], discard: [], shuffleState: 0 },
-            bots: {
-                bot1: { ligretto: 10, deck: createDeck(), discard: [], x: 100, y: 20 },
-                bot2: { ligretto: 10, deck: createDeck(), discard: [], x: window.innerWidth/2, y: 20 },
-                bot3: { ligretto: 10, deck: createDeck(), discard: [], x: window.innerWidth - 100, y: 20 }
-            }
-        };
+<div id="modal-finish" class="overlay-dim">
+    <div class="modal-body">
+        <h1 id="finish-title" style="font-family:var(--font-head); font-size:3rem; margin:0;">MISSION ENDE</h1>
+        <div id="finish-report" style="margin:40px 0; background:#000; padding:35px; font-family:var(--font-mono); line-height:2; border-left:4px solid var(--steam-blue);"></div>
+        <button class="btn-supreme" style="width:100%;" onclick="engine.cycle()">NÄCHSTE RUNDE</button>
+    </div>
+</div>
 
-        // --- Utils & Setup ---
-        function createDeck() {
-            let deck = [];
-            COLORS.forEach(c => { for (let i = 1; i <= 10; i++) deck.push({ color: c, number: i }); });
-            return deck.sort(() => Math.random() - 0.5);
+<script>
+/**
+ * OMNI-TITAN X CORE LOGIC V4.0
+ */
+
+const state = {
+    u: { name: "GAST_01", cash: 500, inv: ['classic'], theme: 'classic' },
+    g: { active: false, round: 1, scores: {p:0, b0:0, b1:0, b2:0}, lig:[], row:[], hand:[], disc:[], piles:[], bots:[10,10,10], speed: 1800 },
+    drag: null
+};
+
+const marketItems = [
+    { id: 'classic', n: 'DEEP FOREST', p: 0, c: '#133d2a' },
+    { id: 'carbon', n: 'CARBON HEX', p: 400, c: 'radial-gradient(circle, #222 0%, #000 100%)' },
+    { id: 'neon', n: 'CYBER GRID', p: 1000, c: 'repeating-linear-gradient(0deg, #000, #000 20px, #050505 20px, #050505 22px)' },
+    { id: 'lava', n: 'VOLCANO CORE', p: 2500, c: 'linear-gradient(45deg, #2a0505 0%, #000 100%)' }
+];
+
+const ui = {
+    init() {
+        setTimeout(() => {
+            document.getElementById('intro-engine').style.display = 'none';
+            document.getElementById('dashboard').style.visibility = 'visible';
+        }, 4000);
+        this.renderMarket();
+        this.sync();
+    },
+    tab(id) {
+        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById('pane-'+id).classList.add('active');
+        event.target.classList.add('active');
+        if(id === 'settings' || id === 'shop') this.renderMarket();
+    },
+    modal(id) { document.getElementById('modal-'+id).style.display = 'flex'; },
+    hide() { document.querySelectorAll('.overlay-dim').forEach(o => o.style.display = 'none'); },
+    sync() {
+        document.getElementById('ui-op-name').innerText = state.u.name.toUpperCase();
+        document.getElementById('ui-cash').innerText = state.u.cash + " CR";
+        document.getElementById('ui-profile-pic').style.backgroundImage = `url('https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${state.u.name}')`;
+    },
+    renderMarket() {
+        const container = document.getElementById('market-container');
+        const select = document.getElementById('cfg-theme-select');
+        container.innerHTML = ''; select.innerHTML = '';
+        marketItems.forEach(item => {
+            const owned = state.u.inv.includes(item.id);
+            container.innerHTML += `
+                <div class="market-card">
+                    <div class="market-img" style="background:${item.c}"></div>
+                    <div class="market-info">
+                        <div style="font-family:var(--font-head); font-size:1rem; margin-bottom:10px;">${item.n}</div>
+                        <div style="color:var(--gold); font-family:var(--font-mono); margin-bottom:20px;">${item.p} CR</div>
+                        <button class="btn-supreme" style="padding:10px; width:100%; font-size:0.7rem; background:${owned?'var(--steam-blue)':'#333'}" onclick="ui.purchase('${item.id}', ${item.p})">
+                            ${owned ? 'BESITZT' : 'ERWERBEN'}
+                        </button>
+                    </div>
+                </div>`;
+            if(owned) select.innerHTML += `<option value="${item.id}" ${state.u.theme === item.id ? 'selected' : ''}>${item.n}</option>`;
+        });
+    },
+    purchase(id, p) {
+        if(state.u.inv.includes(id)) return;
+        if(state.u.cash >= p) {
+            state.u.cash -= p; state.u.inv.push(id);
+            this.sync(); this.renderMarket();
+        }
+    },
+    applyTheme(id) {
+        state.u.theme = id;
+        const theme = marketItems.find(i => i.id === id);
+        document.getElementById('battle-table').style.background = theme.c;
+    },
+    toast(msg) {
+        const t = document.getElementById('shuffle-toast');
+        t.innerText = msg; t.classList.add('active');
+        setTimeout(() => t.classList.remove('active'), 3000);
+    }
+};
+
+const engine = {
+    init() {
+        const n = document.getElementById('op-name-input').value;
+        if(n) state.u.name = n;
+        state.g.speed = parseInt(document.getElementById('op-difficulty').value);
+        ui.sync(); ui.hide();
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('arena').style.display = 'flex';
+        state.g.scores = {p:0, b0:0, b1:0, b2:0};
+        state.g.round = 1;
+        this.launch();
+    },
+    launch() {
+        state.g.active = true;
+        state.g.piles = [];
+        document.getElementById('pile-container').innerHTML = '';
+        let d = [];
+        ['red','blue','green','yellow'].forEach(c => { for(let i=1;i<=10;i++) d.push({c,v:i}); });
+        d = d.sort(() => Math.random() - 0.5);
+        state.g.lig = d.splice(0,10);
+        state.g.row = d.splice(0,3);
+        state.g.hand = d;
+        state.g.disc = [];
+        state.g.bots = [10,10,10];
+        this.refresh();
+        this.runNeuralNetwork();
+    },
+    refresh() {
+        if(!state.g.active) return;
+        // Auto-fill Row from Ligretto
+        for(let i=0; i<3; i++) {
+            if(!state.g.row[i] && state.g.lig.length > 0) state.g.row[i] = state.g.lig.pop();
         }
 
-        function createCardDOM(card, isBack = false) {
-            let el = document.createElement('div');
-            el.className = `card ${isBack ? 'back' : card.color}`;
-            if (!isBack) el.innerText = card.number;
-            return el;
+        // Draw Slot
+        const ds = document.getElementById('slot-draw');
+        ds.innerHTML = state.g.hand.length > 0 ? '<div class="card back"></div>' : '';
+        if(state.g.hand.length === 0 && state.g.disc.length > 0) ds.classList.add('highlight'); else ds.classList.remove('highlight');
+
+        // Discard Slot
+        const disc = document.getElementById('slot-discard'); disc.innerHTML = '';
+        if(state.g.disc.length > 0) disc.appendChild(this.buildCard(state.g.disc[state.g.disc.length-1], 'discard'));
+
+        // Row Slots
+        for(let i=0; i<3; i++) {
+            const r = document.getElementById('slot-row-'+i); r.innerHTML = '';
+            if(state.g.row[i]) r.appendChild(this.buildCard(state.g.row[i], 'row', i));
         }
 
-        // --- Player Interaction Logic ---
-        function renderPlayerCards() {
-            if(state.gameOver) return;
-            const p = state.player;
+        // Ligretto Slot
+        document.getElementById('ligretto-counter').innerText = state.g.lig.length;
+        const ls = document.getElementById('slot-ligretto'); ls.innerHTML = '';
+        if(state.g.lig.length > 0) ls.appendChild(this.buildCard(state.g.lig[state.g.lig.length-1], 'ligretto'));
 
-            // 1. Ligretto
-            const slotLigretto = document.getElementById('slot-ligretto');
-            slotLigretto.innerHTML = '<div class="slot-label" style="color: #f39c12; font-weight: bold;">LIGRETTO</div>';
-            if (p.ligretto.length > 0) {
-                let card = p.ligretto[p.ligretto.length - 1];
-                let el = createCardDOM(card);
-                el.style.top = '0'; el.style.left = '0';
-                makeDraggable(el, { source: 'ligretto' }, card);
-                
-                let badge = document.createElement('div');
-                badge.className = 'count-badge';
-                badge.innerText = p.ligretto.length;
-                el.appendChild(badge);
-                slotLigretto.appendChild(el);
-            } else if (!state.gameOver) {
-                win('DU');
-            }
-
-            // 2. Row
-            for (let i = 0; i < 3; i++) {
-                const slot = document.getElementById(`slot-row-${i}`);
-                slot.innerHTML = '';
-                if (p.row[i]) {
-                    let el = createCardDOM(p.row[i]);
-                    el.style.top = '0'; el.style.left = '0';
-                    makeDraggable(el, { source: 'row', index: i }, p.row[i]);
-                    slot.appendChild(el);
-                }
-            }
-
-            // 3. Deck & Discard
-            const slotDeck = document.getElementById('slot-deck');
-            const slotDiscard = document.getElementById('slot-discard');
-            slotDeck.innerHTML = '<div class="slot-label">Stapel</div>';
-            slotDiscard.innerHTML = '<div class="slot-label">Ablage</div>';
-
-            if (p.deck.length > 0) {
-                let deckEl = createCardDOM(null, true);
-                deckEl.style.top = '0'; deckEl.style.left = '0';
-                deckEl.onclick = drawThree;
-                slotDeck.appendChild(deckEl);
-            } else if (p.discard.length > 0 && p.shuffleState === 1) {
-                // Deck awaits shuffling
-                let deckEl = createCardDOM(null, true);
-                deckEl.style.top = '0'; deckEl.style.left = '0';
-                deckEl.onclick = shuffleDeck;
-                slotDeck.appendChild(deckEl);
-            }
-
-            if (p.discard.length > 0) {
-                let card = p.discard[p.discard.length - 1];
-                let el = createCardDOM(card);
-                el.style.top = '0'; el.style.left = '0';
-                if (p.deck.length === 0 && p.shuffleState === 0) {
-                    // Click discard to move to deck
-                    el.onclick = () => { p.shuffleState = 1; renderPlayerCards(); };
-                    el.style.cursor = 'pointer';
-                } else {
-                    makeDraggable(el, { source: 'discard' }, card);
-                }
-                slotDiscard.appendChild(el);
-            }
+        state.g.bots.forEach((b,i) => document.getElementById(`bot-${i}-ui`).innerText = `NEURAL_${i}: ${b}`);
+    },
+    buildCard(data, type, idx) {
+        const el = document.createElement('div');
+        el.className = `card ${data.c}`; el.innerText = data.v;
+        el.onpointerdown = (e) => this.dragStart(e, el, data, type, idx);
+        return el;
+    },
+    draw() {
+        if(state.g.hand.length === 0) {
+            if(state.g.disc.length === 0) return;
+            state.g.hand = [...state.g.disc].reverse();
+            state.g.disc = [];
+            ui.toast("STAPEL GEMISCHT!");
+        } else {
+            for(let i=0; i<3; i++) if(state.g.hand.length > 0) state.g.disc.push(state.g.hand.shift());
         }
+        this.refresh();
+    },
+    dragStart(e, el, data, type, idx) {
+        const r = el.getBoundingClientRect();
+        state.drag = { el, data, type, idx, ox: e.clientX - r.left, oy: e.clientY - r.top };
+        el.style.position = 'fixed'; el.style.zIndex = '20000'; el.style.pointerEvents = 'none';
+        document.body.appendChild(el);
+    },
+    dragProcess(e) {
+        if(!state.drag) return;
+        state.drag.el.style.left = (e.clientX - state.drag.ox) + 'px';
+        state.drag.el.style.top = (e.clientY - state.drag.oy) + 'px';
+    },
+    dragEnd(e) {
+        if(!state.drag) return;
+        const c = state.drag.data;
+        const surf = document.getElementById('pile-container').getBoundingClientRect();
+        let success = false;
 
-        function drawThree() {
-            let p = state.player;
-            for(let i=0; i<3; i++) {
-                if(p.deck.length > 0) p.discard.push(p.deck.shift());
-            }
-            renderPlayerCards();
-        }
-
-        function shuffleDeck() {
-            let p = state.player;
-            let deckEl = document.getElementById('slot-deck').querySelector('.card');
-            if(deckEl) deckEl.classList.add('shuffling');
-            
-            setTimeout(() => {
-                p.deck = p.discard.reverse();
-                p.discard = [];
-                p.shuffleState = 0;
-                renderPlayerCards();
-            }, 800); // 0.8s realistische Misch-Verzögerung
-        }
-
-        // --- Drag & Drop Physics ---
-        let draggedEl = null;
-        let dragData = null;
-        let dragStartRect = null;
-        let offset = {x: 0, y: 0};
-
-        function makeDraggable(el, meta, cardObj) {
-            el.addEventListener('pointerdown', (e) => {
-                if(e.button !== 0 && e.type !== 'touchstart') return; // Only left click or touch
-                e.preventDefault();
-                
-                dragData = { meta, cardObj, originalParent: el.parentElement };
-                dragStartRect = el.getBoundingClientRect();
-                
-                offset.x = e.clientX - dragStartRect.left;
-                offset.y = e.clientY - dragStartRect.top;
-
-                // Move out of layout flow and attach to table for free movement
-                TABLE.appendChild(el);
-                el.style.position = 'absolute';
-                el.style.zIndex = zIndexCounter++;
-                el.style.left = dragStartRect.left + 'px';
-                el.style.top = dragStartRect.top + 'px';
-                el.style.transform = 'scale(1.1) rotate(2deg)';
-                draggedEl = el;
-            });
-        }
-
-        window.addEventListener('pointermove', (e) => {
-            if (!draggedEl) return;
-            draggedEl.style.left = (e.clientX - offset.x) + 'px';
-            draggedEl.style.top = (e.clientY - offset.y) + 'px';
+        // Check against existing piles
+        const target = state.g.piles.find(p => {
+            const r = p.el.getBoundingClientRect();
+            return e.clientX > r.left && e.clientX < r.right && e.clientY > r.top && e.clientY < r.bottom;
         });
 
-        window.addEventListener('pointerup', (e) => {
-            if (!draggedEl) return;
-            
-            let dropX = e.clientX;
-            let dropY = e.clientY;
-            
-            let success = evaluateDrop(dropX, dropY, dragData);
+        if(target && target.c === c.c && target.v === c.v - 1) {
+            this.updatePile(target, c, state.u.name);
+            success = true;
+        } else if(c.v === 1 && e.clientX > surf.left && e.clientX < surf.right && e.clientY > surf.top && e.clientY < surf.bottom) {
+            this.spawnPile(c, e.clientX - surf.left, e.clientY - surf.top, state.u.name);
+            success = true;
+        }
 
-            if (!success) {
-                // Snap back
-                draggedEl.style.transition = 'all 0.2s';
-                draggedEl.style.left = dragStartRect.left + 'px';
-                draggedEl.style.top = dragStartRect.top + 'px';
-                draggedEl.style.transform = 'none';
-                
-                let elToReturn = draggedEl;
-                setTimeout(() => {
-                    if(dragData.originalParent && elToReturn.parentElement === TABLE) {
-                        elToReturn.style.position = 'absolute';
-                        elToReturn.style.top = '0'; elToReturn.style.left = '0';
-                        elToReturn.style.transition = 'none';
-                        dragData.originalParent.appendChild(elToReturn);
-                    }
-                }, 200);
-            }
+        if(success) {
+            if(state.drag.type === 'row') state.g.row[state.drag.idx] = null;
+            if(state.drag.type === 'ligretto') state.g.lig.pop();
+            if(state.drag.type === 'discard') state.g.disc.pop();
+            state.u.cash += 20;
+        }
 
-            draggedEl = null;
-            dragData = null;
-        });
-
-        function evaluateDrop(x, y, data) {
-            let card = data.cardObj;
-            let meta = data.meta;
-
-            // 1. Check if dropped on empty Row slot (only allowed from Ligretto)
-            if (meta.source === 'ligretto') {
-                for (let i = 0; i < 3; i++) {
-                    if (state.player.row[i] === null) {
-                        let slotRect = document.getElementById(`slot-row-${i}`).getBoundingClientRect();
-                        // Collison check
-                        if (x > slotRect.left && x < slotRect.right && y > slotRect.top && y < slotRect.bottom) {
-                            state.player.row[i] = state.player.ligretto.pop();
-                            removeDOMElement(draggedEl);
-                            renderPlayerCards();
-                            return true;
-                        }
+        state.drag.el.remove(); state.drag = null; this.refresh();
+        if(state.g.lig.length === 0) this.conclude(state.u.name);
+    },
+    spawnPile(c, x, y, o) {
+        const el = document.createElement('div'); el.className = `card ${c.c}`; el.innerText = c.v;
+        el.style.left = (x - 45) + 'px'; el.style.top = (y - 70) + 'px';
+        document.getElementById('pile-container').appendChild(el);
+        state.g.piles.push({ c: c.c, v: c.v, el, o });
+    },
+    updatePile(p, c, o) {
+        p.v = c.v; p.el.innerText = c.v; p.o = o;
+        if(c.v === 10) { p.el.style.filter = 'brightness(0.3)'; p.el.innerHTML += `<div style="font-size:0.5rem;color:#fff;">${o}</div>`; }
+    },
+    runNeuralNetwork() {
+        const loop = setInterval(() => {
+            if(!state.g.active) return clearInterval(loop);
+            state.g.bots.forEach((b, i) => {
+                if(Math.random() < 0.35) {
+                    const colors = ['red','blue','green','yellow'];
+                    const mc = { c: colors[Math.floor(Math.random()*4)], v: Math.floor(Math.random()*10)+1 };
+                    const t = (mc.v === 1) ? 'new' : state.g.piles.find(p => p.c === mc.c && p.v === mc.v - 1);
+                    if(t) {
+                        state.g.bots[i]--;
+                        if(t === 'new') this.spawnPile(mc, Math.random()*1400, Math.random()*700, 'NEURAL_'+i);
+                        else this.updatePile(t, mc, 'NEURAL_'+i);
+                        if(state.g.bots[i] <= 0) this.conclude('NEURAL_'+i);
+                        this.refresh();
                     }
                 }
-            }
-
-            // 2. Check center area limits
-            let centerRect = document.getElementById('center-area').getBoundingClientRect();
-            if (y > centerRect.bottom || y < centerRect.top) return false;
-
-            // 3. Placing in center
-            if (card.number === 1) {
-                // New pile! Drop exactly where mouse is.
-                addToCenter(card, x - varCardW()/2, y - varCardH()/2);
-                removeFromPlayerSource(meta);
-                return true;
-            } else {
-                // Find matching pile
-                for (let pile of state.centerPiles) {
-                    if (pile.color === card.color && pile.number === card.number - 1) {
-                        // Is mouse close enough? (Realism: Snap radius 100px)
-                        let dist = Math.hypot(pile.x + varCardW()/2 - x, pile.y + varCardH()/2 - y);
-                        if (dist < 120) {
-                            pile.number = card.number;
-                            // Add slight chaotic offset/rotation
-                            pile.x += (Math.random() - 0.5) * 10;
-                            pile.y += (Math.random() - 0.5) * 10;
-                            
-                            placeCardOnTable(card, pile.x, pile.y);
-                            removeFromPlayerSource(meta);
-                            return true;
-                        }
-                    }
-                }
-            }
-            return false;
-        }
-
-        function removeFromPlayerSource(meta) {
-            let p = state.player;
-            if (meta.source === 'ligretto') p.ligretto.pop();
-            if (meta.source === 'row') p.row[meta.index] = null;
-            if (meta.source === 'discard') p.discard.pop();
-            removeDOMElement(draggedEl);
-            renderPlayerCards();
-        }
-
-        function removeDOMElement(el) {
-            if(el && el.parentNode) el.parentNode.removeChild(el);
-        }
-
-        function varCardW() { return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-w')); }
-        function varCardH() { return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-h')); }
-
-        // --- Center Table Logic ---
-        function addToCenter(card, x, y) {
-            state.centerPiles.push({ color: card.color, number: card.number, x: x, y: y });
-            placeCardOnTable(card, x, y);
-        }
-
-        function placeCardOnTable(card, x, y) {
-            let el = createCardDOM(card);
-            el.classList.add('center-card');
-            el.style.left = x + 'px';
-            el.style.top = y + 'px';
-            el.style.zIndex = zIndexCounter++;
-            // Random rotation for realism
-            let rot = (Math.random() - 0.5) * 30;
-            el.style.transform = `rotate(${rot}deg)`;
-            TABLE.appendChild(el);
-        }
-
-        // --- Bot Logic ---
-        function playBot(botId) {
-            if (state.gameOver) return;
-            let b = state.bots[botId];
-
-            // Bots cheat slightly by looking at their "virtual" row and top cards
-            // To simulate realism, they draw cards internally and look for matches.
-            
-            // 1. Try to play from virtual ligretto
-            if (b.ligretto > 0) {
-                let simCard = { color: COLORS[Math.floor(Math.random()*4)], number: Math.floor(Math.random()*10)+1 }; // Simulated top card
-                if(tryBotPlay(botId, b, simCard, true)) return;
-            }
-
-            // 2. Cycle deck
-            if (b.deck.length === 0) {
-                b.deck = b.discard.reverse();
-                b.discard = [];
-            } else {
-                b.discard.push(b.deck.shift());
-                let topDiscard = b.discard[b.discard.length - 1];
-                tryBotPlay(botId, b, topDiscard, false);
-            }
-        }
-
-        function tryBotPlay(botId, botObj, card, isLigretto) {
-            if(state.gameOver) return false;
-
-            // Check if can play
-            let targetPile = null;
-            if (card.number === 1) {
-                targetPile = "new";
-            } else {
-                targetPile = state.centerPiles.find(p => p.color === card.color && p.number === card.number - 1);
-            }
-
-            if (targetPile) {
-                if (isLigretto) {
-                    botObj.ligretto--;
-                    document.getElementById(botId).innerText = `Bot ${botId.replace('bot','')} : ${botObj.ligretto}`;
-                    if (botObj.ligretto <= 0) { win(`Bot ${botId.replace('bot','')}`); return true; }
-                }
-
-                // Animate card flying from bot
-                animateBotCard(botObj.x, botObj.y, card, targetPile);
-                return true;
-            }
-            return false;
-        }
-
-        function animateBotCard(startX, startY, card, targetPile) {
-            let el = createCardDOM(card);
-            el.classList.add('bot-card');
-            el.style.left = startX + 'px';
-            el.style.top = startY + 'px';
-            el.style.zIndex = zIndexCounter++;
-            TABLE.appendChild(el);
-
-            // Calculate Target
-            let targetX, targetY;
-            if (targetPile === "new") {
-                // Random center coords
-                let centerRect = document.getElementById('center-area').getBoundingClientRect();
-                targetX = centerRect.left + Math.random() * (centerRect.width - varCardW());
-                targetY = centerRect.top + Math.random() * (centerRect.height - varCardH());
-                state.centerPiles.push({ color: card.color, number: card.number, x: targetX, y: targetY });
-            } else {
-                targetX = targetPile.x + (Math.random() - 0.5) * 10;
-                targetY = targetPile.y + (Math.random() - 0.5) * 10;
-                targetPile.number = card.number;
-                targetPile.x = targetX; 
-                targetPile.y = targetY;
-            }
-
-            // Trigger animation next frame
-            requestAnimationFrame(() => {
-                el.style.transform = `translate(${targetX - startX}px, ${targetY - startY}px) rotate(${(Math.random()-0.5)*30}deg)`;
             });
-
-            // Convert to static center card after animation
-            setTimeout(() => {
-                if(state.gameOver) return;
-                el.classList.remove('bot-card');
-                el.classList.add('center-card');
-                el.style.transform = `rotate(${(Math.random()-0.5)*30}deg)`;
-                el.style.left = targetX + 'px';
-                el.style.top = targetY + 'px';
-            }, 400);
+        }, state.g.speed);
+    },
+    conclude(w) {
+        state.g.active = false;
+        const pDelta = (40 - state.g.lig.length - state.g.hand.length - state.g.disc.length) * 2 - (state.g.lig.length * 2);
+        state.g.scores.p += pDelta;
+        ui.modal('finish');
+        let report = `DOMINANZ: ${w}<br><br>${state.u.name}: ${state.g.scores.p} PKT<br>`;
+        state.g.bots.forEach((b,i) => {
+            state.g.scores['b'+i] += (10-b)*2;
+            report += `NEURAL_${i}: ${state.g.scores['b'+i]} PKT<br>`;
+        });
+        document.getElementById('finish-report').innerHTML = report;
+        if(state.g.scores.p >= 100) {
+            document.getElementById('finish-title').innerText = "SYSTEMSIEG";
+            document.getElementById('finish-btn').onclick = () => engine.terminate();
         }
+    },
+    cycle() { state.g.round++; ui.hide(); this.launch(); },
+    terminate() { state.g.active = false; ui.hide(); document.getElementById('arena').style.display = 'none'; document.getElementById('dashboard').style.display = 'flex'; ui.sync(); }
+};
 
-        // --- Game Flow ---
-        function startGame() {
-            document.getElementById('menu').style.display = 'none';
-            document.getElementById('player-area').style.display = 'flex';
-            
-            // Setup Player Deck
-            let fullDeck = createDeck();
-            state.player.ligretto = fullDeck.splice(0, 10);
-            state.player.row = fullDeck.splice(0, 3);
-            state.player.deck = fullDeck; // remaining 27
-
-            renderPlayerCards();
-
-            // Start Bots (unpredictable intervals for realism)
-            botIntervals.push(setInterval(() => playBot('bot1'), 1800));
-            botIntervals.push(setInterval(() => playBot('bot2'), 2100));
-            botIntervals.push(setInterval(() => playBot('bot3'), 1900));
-        }
-
-        function win(name) {
-            state.gameOver = true;
-            botIntervals.forEach(clearInterval);
-            
-            setTimeout(() => {
-                let overlay = document.getElementById('menu');
-                overlay.style.display = 'flex';
-                overlay.innerHTML = `
-                    <h1 style="font-size: 5rem; color: #e74c3c; text-shadow: 2px 2px #000;">LIGRETTO STOP!</h1>
-                    <h2 style="font-size: 3rem;">${name} HAT GEWONNEN!</h2>
-                    <button style="margin-top: 30px;" onclick="location.reload()">Neues Spiel</button>
-                `;
-            }, 500);
-        }
-
-    </script>
+window.onpointermove = (e) => {
+    document.getElementById('ui-cursor').style.left = e.clientX + 'px';
+    document.getElementById('ui-cursor').style.top = e.clientY + 'px';
+    engine.dragProcess(e);
+};
+window.onpointerup = (e) => engine.dragEnd(e);
+ui.init();
+</script>
 </body>
 </html>
